@@ -1,0 +1,3 @@
+[submodule "noise2noise-pytorch"]
+	path = noise2noise-pytorch
+	url = https://github.com/joeylitalien/noise2noise-pytorch.git
