@@ -21,7 +21,17 @@ pip install OpenEXR
 pip install git+https://github.com/jamesbowman/openexrpython.git
 sudo apt-get install -y openexr
 ```
-## torch install
+## install torch
 ```bash
 pip install torch torchvision torchaudio --extra-index-url https://download.pytorch.org/whl/cu116
 ```
+
+## download data
+```bash
+pwd #noise_reduction
+python scripts/download_data.py --names ['hok'] --years [2017]
+```
+
+You can download multiple radar names and years in the list.
+
+See [here](https://ergsc.isee.nagoya-u.ac.jp/data/ergsc/ground/radar/sd/) for radar names and the years you can obtain them.
