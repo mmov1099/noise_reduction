@@ -35,8 +35,8 @@ def dl(url, radar_name_and_year):
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument('-n','--names', default=['hok'])
-    parser.add_argument('-y', '--years', default=[2017])
+    parser.add_argument('-n','--names', default=['hok'], nargs='*')
+    parser.add_argument('-y', '--years', default=[2017], nargs='*')
     args = parser.parse_args()
 
     dl_data(args.names, args.years)

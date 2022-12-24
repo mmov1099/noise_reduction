@@ -26,6 +26,44 @@ sudo apt-get install -y openexr
 pip install torch torchvision torchaudio --extra-index-url https://download.pytorch.org/whl/cu116
 ```
 
+## Noise2Noise
+### gaussian noise
+The noise parameter is the maximum standard deviation σ.
+```
+python3 scripts/noise2noise/train.py \
+  --train-dir data/fitacf/hok/2017 --train-size 1000 \
+  --valid-dir data/fitacf/hok/2017 --valid-size 200 \
+  --ckpt-save-path ckpts \
+  --nb-epochs 10 \
+  --batch-size 4 \
+  --loss l2 \
+  --noise-type gaussian \
+  --noise-param 50 \
+  --crop-size 64 \
+  --plot-stats \
+  --cuda
+```
+### poisson noise
+The noise parameter is the Poisson parameter λ.
+```
+python3 train.py
+  --loss l2 \
+  --noise-type poisson \
+  --noise-param 50 \
+  --cuda
+```
+### test
+```
+python3 test.py \
+  --data ../data \
+  --load-ckpt ../ckpts/gaussian/n2n.pt \
+  --noise-type gaussian \
+  --noise-param 50 \
+  --crop-size 256 \
+  --show-output 3 \
+  --cuda
+```
+
 ## download data
 ```bash
 pwd #noise_reduction
