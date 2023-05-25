@@ -10,7 +10,7 @@ from utils import *
 
 import os
 import json
-
+from plot import plot_list_data
 
 class Noise2Noise(object):
     """Implementation of Noise2Noise from Lehtinen et al. (2018)."""
@@ -184,8 +184,20 @@ class Noise2Noise(object):
         # Create montage and save images
         print('Saving images and montages to: {}'.format(save_path))
         for i in range(len(source_imgs)):
-            img_name = test_loader.dataset.imgs[i]
-            create_montage(img_name, self.p.noise_type, save_path, source_imgs[i], denoised_imgs[i], clean_imgs[i], show)
+        #     img_name = test_loader.dataset.imgs[i]
+        #     create_montage(img_name, self.p.noise_type, save_path, source_imgs[i], denoised_imgs[i], clean_imgs[i], show)
+
+            source_t = source_imgs[i].cpu().narrow(0, 0, 1)
+            denoised_t = denoised_imgs[i].cpu()
+            clean_t = clean_imgs[i].cpu()
+
+            source = tvF.to_pil_image(source_t)
+            denoised = tvF.to_pil_image(torch.clamp(denoised_t, 0, 1))
+            clean = tvF.to_pil_image(clean_t)
+
+            plot_list_data([source, denoised, clean])
+            filename = test_loader.dataset.imgs[i].split('.')[0]
+            plt.savefig(os.path.join(save_path, filename+ '.jpg'), format='jpg')
 
 
     def eval(self, valid_loader):
@@ -196,7 +208,7 @@ class Noise2Noise(object):
         valid_start = datetime.now()
         loss_meter = AvgMeter()
         psnr_meter = AvgMeter()
-
+        # self.reporter.report(device=torch.device(0))
         for batch_idx, (source, target) in enumerate(valid_loader):
             if self.use_cuda:
                 source = source.cuda()
@@ -217,6 +229,7 @@ class Noise2Noise(object):
                 source_denoised = source_denoised.cpu()
                 target = target.cpu()
                 psnr_meter.update(psnr(source_denoised[i], target[i]).item())
+            # self.reporter.report(device=torch.device(0))
 
         valid_loss = loss_meter.avg
         valid_time = time_elapsed_since(valid_start)[0]
@@ -281,7 +294,8 @@ class Noise2Noise(object):
                     time_meter.reset()
 
             # Epoch end, save and reset tracker
-            self._on_epoch_end(stats, train_loss_meter.avg, epoch, epoch_start, valid_loader)
+            with torch.no_grad():
+                self._on_epoch_end(stats, train_loss_meter.avg, epoch, epoch_start, valid_loader)
             train_loss_meter.reset()
 
         train_elapsed = time_elapsed_since(train_start)[0]

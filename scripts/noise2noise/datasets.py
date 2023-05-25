@@ -32,24 +32,6 @@ sys.path.append( str(current_dir) + '/../' )
 from cdf import cdf2vlos_and_utc
 
 
-def my_collate_fn(batch):
-    # datasetの出力が
-    # [image, target] = dataset[batch_idx]
-    # の場合.
-    images = []
-    targets = []
-    for sample in batch:
-        image, target = sample
-        images.append(image)
-        targets.append(target)
-    print('img',len(image))
-    print('tgt',len(target))
-    breakpoint()
-    images = torch.stack(images, dim=0)
-    targets = torch.stack(targets, dim=0)
-    return [images, targets]
-
-
 def load_dataset(root_dir, redux, params, shuffled=False, single=False):
     """Loads dataset and returns corresponding data loader."""
 
@@ -64,11 +46,11 @@ def load_dataset(root_dir, redux, params, shuffled=False, single=False):
         dataset = NoisyDataset(root_dir, redux, params.crop_size,
             clean_targets=params.clean_targets, noise_dist=noise, seed=params.seed)
 
-    # Use batch size of 1, if requested (e.g. test set)
-    if single:
-        return DataLoader(dataset, batch_size=1, shuffle=shuffled, collate_fn=my_collate_fn)
-    else:
-        return DataLoader(dataset, batch_size=params.batch_size, shuffle=shuffled, collate_fn=my_collate_fn)
+        # Use batch size of 1, if requested (e.g. test set)
+        if single:
+            return DataLoader(dataset, batch_size=1, shuffle=shuffled)
+        else:
+            return DataLoader(dataset, batch_size=params.batch_size, shuffle=shuffled)
 
 
 class AbstractDataset(Dataset):
@@ -139,6 +121,24 @@ class NoisyDataset(AbstractDataset):
         self.seed = seed
         if self.seed:
             np.random.seed(self.seed)
+
+        self.h_max, self.w_max = self._find_hmax_and_wmax()
+
+
+    def _find_hmax_and_wmax(self):
+        heights = []
+        widths = []
+
+        for img in self.imgs:
+            img_path = os.path.join(self.root_dir, img)
+            img, _ = cdf2vlos_and_utc(img_path)
+            heights.append(img.shape[0])
+            widths.append(img.shape[1])
+
+        h_max = max(heights)
+        w_max = max(widths)
+
+        return h_max, w_max
 
 
     def _add_noise(self, img):
@@ -231,14 +231,45 @@ class NoisyDataset(AbstractDataset):
             raise ValueError('Invalid noise type: {}'.format(self.noise_type))
 
 
+    def _padding(self, img):
+        h_max = self.h_max
+        w_max = self.w_max
+
+        height, width = img.shape[:2]
+
+        target_size = (h_max, w_max) #src size < dst sizeの前提
+
+        padding_height = (target_size[0] - height)/2
+        padding_width = (target_size[1] - width)/2
+        value = 1.0000000e+04
+
+        if padding_height.is_integer():
+            top = bottom = int(padding_height)
+        else:
+            top = int(padding_height)
+            bottom = top + 1
+        if padding_width.is_integer():
+            left = right = int(padding_width)
+        else:
+            left = int(padding_width)
+            right = left + 1
+
+        img = np.pad(img, [(top, bottom), (left, right)], 'constant', constant_values=(value, value))
+
+        return img
+
+
     def __getitem__(self, index):
         """Retrieves image from folder and corrupts it."""
 
         # Load PIL image
         img_path = os.path.join(self.root_dir, self.imgs[index])
         # img =  Image.open(img_path).convert('RGB')
-        img, _ =cdf2vlos_and_utc(img_path)
-
+        img, _ = cdf2vlos_and_utc(img_path)
+        # print(img.shape)
+        img = self._padding(img)
+        # print(img.shape)
+        # print('___________________________')
         # Random square crop
         # if self.crop_size != 0:
         #     img = self._random_crop([img])[0]
@@ -246,16 +277,15 @@ class NoisyDataset(AbstractDataset):
         # Corrupt source image
         # tmp = self._corrupt(img)
         # source = tvF.to_tensor(self._corrupt(img))
-        source = tvF.to_tensor(img)
+        source = target = tvF.to_tensor(img)
 
 
         # Corrupt target image, but not when clean targets are requested
-        if self.clean_targets:
-            target = tvF.to_tensor(img)
-        else:
-            # target = tvF.to_tensor(self._corrupt(img))
-            print('please select --clean-targets True as args')
-
+        # if self.clean_targets:
+        #     target = tvF.to_tensor(img)
+        # else:
+        #     # target = tvF.to_tensor(self._corrupt(img))
+        #     print('please select --clean-targets True as args')
         return source, target
 
 

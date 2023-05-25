@@ -1,8 +1,8 @@
 import seaborn as sns
 import matplotlib.pyplot as plt
 
-def plot_data(data, timestamp, mask=False):
-    if mask is False:
+def plot_data(data, timestamp, mask=None):
+    if mask is None:
         mask=data==1.0000000e+04
     fig, ax = plt.subplots(figsize=(10,2))
     sns.heatmap(data, cmap="jet", mask=mask, vmax=500 ,vmin=-500)
@@ -22,10 +22,10 @@ def plot_data(data, timestamp, mask=False):
     plt.subplots_adjust(hspace=0.08)
     plt.show()
 
-def plot_list_data(list_data, timestamp, mask_value=False):
+def plot_list_data(list_data, timestamp=None, mask_value=None):
     fig, ax = plt.subplots(len(list_data), sharey='all', figsize=(10,2*len(list_data)))
     for i, d in enumerate(list_data):
-        if mask_value is False:
+        if mask_value is None:
             mask=d==1.0000000e+04
         else:
             mask=d>=mask_value
@@ -39,9 +39,10 @@ def plot_list_data(list_data, timestamp, mask_value=False):
         ax[i].collections[0].colorbar.set_label('Doppler velocity[m/s]')
         ax[i].set(xticklabels=[])
         # ax[i].tick_params(bottom=False)
-    idxs = [int(xtick) for xtick in ax[-1].get_xticks()]
-    xlabels = [timestamp[idx] for idx in idxs]
-    ax[-1].set_xticklabels(xlabels)
+    if timestamp is not None:
+        idxs = [int(xtick) for xtick in ax[-1].get_xticks()]
+        xlabels = [timestamp[idx] for idx in idxs]
+        ax[-1].set_xticklabels(xlabels)
     ax[-1].set(xlabel='epoch')
     plt.subplots_adjust(hspace=0.08)
     plt.show()

@@ -29,18 +29,32 @@ pip install torch torchvision torchaudio --extra-index-url https://download.pyto
 ## Noise2Noise
 ### gaussian noise
 The noise parameter is the maximum standard deviation σ.
+
+for training
 ```
-python3 scripts/noise2noise/train.py \
+python scripts/noise2noise/train.py \
   --train-dir data/fitacf/hok/2017 --train-size 1000 \
   --valid-dir data/fitacf/hok/2017 --valid-size 200 \
   --ckpt-save-path ckpts \
   --nb-epochs 10 \
-  --batch-size 4 \
+  --batch-size 1 \
   --loss l2 \
   --noise-type gaussian \
   --noise-param 50 \
-  --crop-size 64 \
   --plot-stats \
+  --cuda \
+  --clean-targets \
+  --ckpt-overwrite
+```
+
+```bash
+python scripts/noise2noise/test.py \
+  --data data/fitacf/hok/2017 \
+  --load-ckpt ckpts/gaussian-clean/n2n-gaussian.pt \
+  --noise-type gaussian \
+  --noise-param 50 \
+  --crop-size 256 \
+  --show-output 3 \
   --cuda
 ```
 ### poisson noise
@@ -66,10 +80,10 @@ python3 test.py \
 
 ## download data
 ```bash
-pwd #noise_reduction
+pwd # noise_reduction
 python scripts/download_data.py --names ['hok'] --years [2017]
 ```
 
 You can download multiple radar names and years in the list.
 
-See [here](https://ergsc.isee.nagoya-u.ac.jp/data/ergsc/ground/radar/sd/) for radar names and the years you can obtain them.
+See [here](https://ergsc.isee.nagoya-u.ac.jp/data/ergsc/ground/radar/sd/) for radar names and the years you can obtain.

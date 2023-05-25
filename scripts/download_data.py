@@ -2,6 +2,7 @@ import requests
 from bs4 import BeautifulSoup
 import os
 import argparse
+from tqdm import tqdm
 
 def dl_data(radar_names: list = ['hok'], years: list = [2017]):
     fitacf_local_url = 'https://ergsc.isee.nagoya-u.ac.jp/data/ergsc/ground/radar/sd/fitacf_local/'
@@ -21,17 +22,18 @@ def dl(url, radar_name_and_year):
     os.makedirs(save_dir, exist_ok=True)
     file_requests= requests.get(temp_url)
     soup = BeautifulSoup(file_requests.content, "html.parser")
-    for s in soup.find_all("a")[1:]:
+    for s in tqdm(soup.find_all("a")[1:]):
         filename = s.get('href')
         file_path = save_dir + filename
         if os.path.exists(file_path):
-            print(f'{filename} already exists')
+            pass
+            # print(f'{filename} already exists')
         else:
             data_url = temp_url + filename
             urlData = requests.get(data_url).content
             with open(file_path ,mode='xb') as f: # wb でバイト型を書き込める
                 f.write(urlData)
-            print(f'{filename} was saved')
+            # print(f'{filename} was saved')
 
 def main():
     parser = argparse.ArgumentParser()
